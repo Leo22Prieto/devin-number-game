@@ -1,5 +1,6 @@
 'use client';
 
+import { log } from 'console';
 import { useState } from 'react';
 
   const MAX_ATTEMPTS = 10;
@@ -43,6 +44,7 @@ export default function Home() {
     // Validation (vérifier que c'est un nombre entre 1 et 100)
     if (isNaN(userGuess) || userGuess < 1 || userGuess > 100) {
       setGameState({ ...gameState, message: 'Veuillez entrer un nombre valide entre 1 et 100.', guess: '' });
+  
       return;
     }
 
@@ -77,8 +79,14 @@ export default function Home() {
 
   // 4. Fonction pour redémarrer le jeu
   const restartGame = () => {
-    // Crée une nouvelle instance de l'état initial
-    setGameState(INITIAL_STATE);
+    // Crée une nouvelle instance de l'état avec un NOUVEAU nombre secret
+    setGameState({
+      secretNumber: Math.floor(Math.random() * 100) + 1,
+      guess: '',
+      message: 'Devinez un nombre entre 1 et 100.',
+      attempts: 0,
+      gameStatus: 'playing',
+    });
   };
 
   return (
@@ -108,11 +116,10 @@ export default function Home() {
               placeholder="Votre nombre..."
               min="1"
               max="100"
-              className="grow p-3 border-2 border-indigo-300 rounded-lg focus:border-indigo-500 focus:outline-none transition"
+              className="grow p-3 border-2 border-indigo-300 rounded-lg focus:border-indigo-500 focus:outline-none transition placeholder-gray-700 text-gray-900"
             />
-            {/* Le bouton de vérification (sans fonction pour l'instant) */}
             <button
-              onClick={checkGuess}
+              type="submit"
               className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition"
             >
               Vérifier
