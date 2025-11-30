@@ -1,65 +1,128 @@
-import Image from "next/image";
+'use client';
 
+import { useState } from 'react';
+  interface GameState {
+    secretNumber: number;
+    guess: string; // La saisie est toujours un string au départ
+    message: string;
+    attempts: number;
+    gameStatus: 'playing' | 'won' | 'lost'; // État du jeu
+  }
+
+  const INITIAL_STATE: GameState = {
+    // Génère un nombre secret entre 1 et 100
+    secretNumber: Math.floor(Math.random() * 100) + 1, 
+    guess: '',
+    message: 'Devinez un nombre entre 1 et 100.',
+    attempts: 0,
+    gameStatus: 'playing',
+  };
 export default function Home() {
+  // 1. Déclaration du State
+  const [gameState, setGameState] = useState<GameState>(INITIAL_STATE); 
+  const { guess, message, attempts, gameStatus } = gameState; 
+
+  // 2. Gestion de la saisie (avec typage des événements React)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Utilisation de l'opérateur de propagation (...) pour préserver le reste de l'état
+    setGameState({ ...gameState, guess: e.target.value }); 
+  };
+
+  // 3. Logique de jeu et vérification du nombre
+  const checkGuess = () => {
+    // Conversion de la tentative (string) en nombre (number)
+    const userGuess = parseInt(guess);
+    const secretNumber = gameState.secretNumber;
+
+    // Validation (vérifier que c'est un nombre entre 1 et 100)
+    if (isNaN(userGuess) || userGuess < 1 || userGuess > 100) {
+      setGameState({ ...gameState, message: 'Veuillez entrer un nombre valide entre 1 et 100.', guess: '' });
+      return;
+    }
+
+    // Préparation des variables pour la mise à jour
+    let newMessage: string;
+    let newStatus: 'playing' | 'won' | 'lost' = 'playing';
+
+    // Logique de comparaison
+    if (userGuess === secretNumber) {
+      newMessage = `Félicitations ! Vous avez trouvé le nombre ${secretNumber} en ${attempts + 1} essais.`;
+      newStatus = 'won';
+    } else if (userGuess < secretNumber) {
+      newMessage = 'Trop petit ! Essayez encore.';
+    } else {
+      newMessage = 'Trop grand ! Essayez encore.';
+    }
+
+    // Mise à jour de l'état (incrémentation des tentatives et nouveau message)
+    setGameState({
+      ...gameState,
+      guess: '', // Réinitialise l'input
+      message: newMessage,
+      attempts: attempts + 1,
+      gameStatus: newStatus,
+    });
+  };
+
+  // 4. Fonction pour redémarrer le jeu
+  const restartGame = () => {
+    // Crée une nouvelle instance de l'état initial
+    setGameState(INITIAL_STATE);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
+        <h1 className="text-3xl font-bold text-center text-indigo-700 mb-6">
+          Jeu du Devin
+        </h1>
+
+        <p className={`text-center mb-4 font-semibold ${gameStatus === 'won' ? 'text-green-600' : 'text-gray-600'}`}>
+          {message}
+        </p>
+
+        {/* Le formulaire n'apparaît que si le jeu est en cours */}
+        {gameStatus === 'playing' && (
+          <form 
+            onSubmit={(e) => {
+                e.preventDefault();
+                checkGuess();
+            }}
+            className="flex space-x-2 mb-4">
+            <input
+              type="number"
+              value={guess}
+              // Lie la saisie à notre fonction de gestion
+              onChange={handleInputChange} 
+              placeholder="Votre nombre..."
+              min="1"
+              max="100"
+              className="grow p-3 border-2 border-indigo-300 rounded-lg focus:border-indigo-500 focus:outline-none transition"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            {/* Le bouton de vérification (sans fonction pour l'instant) */}
+            <button
+              onClick={checkGuess}
+              className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition"
+            >
+              Vérifier
+            </button>
+          </form>
+        )}
+
+        <p className="text-sm text-gray-500 text-center">
+          Tentatives : <span className="font-bold text-indigo-600">{attempts}</span>
+        </p>
+        
+      </div>
+      {/* Afficher le bouton de redémarrage si le jeu est terminé */}
+        {(gameStatus === 'won' || gameStatus === 'lost') && (
+            <button
+              onClick={restartGame}
+              className="mt-4 w-full bg-green-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-600 transition"
+            >
+                Recommencer
+            </button>
+        )}
     </div>
   );
 }
