@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+
+  const MAX_ATTEMPTS = 10;
+
   interface GameState {
     secretNumber: number;
     guess: string; // La saisie est toujours un string au départ
@@ -30,6 +33,9 @@ export default function Home() {
 
   // 3. Logique de jeu et vérification du nombre
   const checkGuess = () => {
+    // Si le jeu est déjà terminé, on ne fait rien
+    if (gameStatus !== 'playing') return;
+
     // Conversion de la tentative (string) en nombre (number)
     const userGuess = parseInt(guess);
     const secretNumber = gameState.secretNumber;
@@ -40,14 +46,19 @@ export default function Home() {
       return;
     }
 
+    const newAttempts = attempts + 1;
+
     // Préparation des variables pour la mise à jour
     let newMessage: string;
     let newStatus: 'playing' | 'won' | 'lost' = 'playing';
 
-    // Logique de comparaison
+    // Logique de comparaison + gestion de la limite de tentatives
     if (userGuess === secretNumber) {
-      newMessage = `Félicitations ! Vous avez trouvé le nombre ${secretNumber} en ${attempts + 1} essais.`;
+      newMessage = `Félicitations ! Vous avez trouvé le nombre ${secretNumber} en ${newAttempts} essais.`;
       newStatus = 'won';
+    } else if (newAttempts >= MAX_ATTEMPTS) {
+      newMessage = `Dommage ! Vous avez utilisé vos ${MAX_ATTEMPTS} tentatives. Le nombre était ${secretNumber}.`;
+      newStatus = 'lost';
     } else if (userGuess < secretNumber) {
       newMessage = 'Trop petit ! Essayez encore.';
     } else {
@@ -59,7 +70,7 @@ export default function Home() {
       ...gameState,
       guess: '', // Réinitialise l'input
       message: newMessage,
-      attempts: attempts + 1,
+      attempts: newAttempts,
       gameStatus: newStatus,
     });
   };
@@ -110,18 +121,20 @@ export default function Home() {
         )}
 
         <p className="text-sm text-gray-500 text-center">
-          Tentatives : <span className="font-bold text-indigo-600">{attempts}</span>
+          Tentatives : <span className="font-bold text-indigo-600">{attempts}</span>/<span className="font-bold">{MAX_ATTEMPTS}</span>
         </p>
         
       </div>
       {/* Afficher le bouton de redémarrage si le jeu est terminé */}
         {(gameStatus === 'won' || gameStatus === 'lost') && (
+          <div className="w-full max-w-md mt-4">
             <button
               onClick={restartGame}
-              className="mt-4 w-full bg-green-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-600 transition"
+              className={`w-full text-white font-bold py-3 px-6 rounded-lg transition ${gameStatus === 'lost' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
             >
                 Recommencer
             </button>
+          </div>
         )}
     </div>
   );
